@@ -38,26 +38,32 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>${maven.jar.plugin}</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathLayoutType>custom</classpathLayoutType>
-                            <!-- this artifact is used in languagetool-standalone, so adapt the path accordingly: -->
-                            <customClasspathLayout>libs/$${artifact.artifactId}$${dashClassifier?}.$${artifact.extension}</customClasspathLayout>
-                        </manifest>
-                        <manifestEntries>
-                            <!-- as we later unzip the language JARs (see languagetool-standalone's pom.xml), we need to add the top directory to the classpath: -->
-                            <Class-Path>./</Class-Path>
-                            <Main-Class>org.languagetool.commandline.Main</Main-Class>
-                            <ComponentVersion>${project.version}</ComponentVersion>
-                            <Implementation-Date>${maven.build.timestamp}</Implementation-Date>
-                        </manifestEntries>
-                    </archive>
-                </configuration>
-            </plugin>            
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.0</version>
+                <executions>
+                    <execution>
+                        <id>create-fat-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
+                                    <!-- the base name of the resource bundle -->
+                                    <resource>META-INF/org/languagetool/language-module.properties</resource>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <!-- add Main-Class to manifest file -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.languagetool.commandline.Main</mainClass>
+                                </transformer>
+                            </transformers>
+                            <finalName>languagetool-commandline-fat</finalName>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
